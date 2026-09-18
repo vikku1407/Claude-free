@@ -1,77 +1,33 @@
-# Claude-free
+# MCS — Dispatch & Sales Summary Report ERP
 
-> A free, open repo for all users — no sign-up, no paywall, no tracking.
+Single-file ERP for **Mining Chemical Suppliers (Tyre-Lub Division)**: dispatch, inward and
+stock-transfer entries, customer/item masters, stock statements and the dispatch report.
+No server, no build step, no database — one `index.html`.
 
-<p align="left">
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <img alt="No build step" src="https://img.shields.io/badge/build-none%20needed-brightgreen">
-  <img alt="Zero dependencies" src="https://img.shields.io/badge/dependencies-0-informational">
-  <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-9cf">
-</p>
+## Run it
 
-Plain HTML/CSS/JS landing page + a home for free prompts, guides and tiny tools.
-Clone it, fork it, ship it on GitHub Pages in a minute.
-
----
-
-## Contents
-
-```
-Claude-free/
-├── index.html          # the landing page
-├── assets/
-│   ├── styles.css      # design tokens, dark + light theme, responsive layout
-│   └── app.js          # theme toggle, scroll spy, copy buttons, filters (all optional)
-├── README.md
-└── LICENSE
-```
-
-## Quick start
-
-No install step. Pick whichever is easier:
+Open `index.html` in a browser, or serve the folder:
 
 ```bash
-# 1) open it directly — works offline, works on a phone
-open index.html            # macOS
-xdg-open index.html        # Linux
-
-# 2) or serve it locally
-python3 -m http.server 8000   # → http://localhost:8000
+python3 -m http.server 8000     # → http://localhost:8000
 ```
 
-## Publishing on GitHub Pages
+Log in with the seeded admin (`Admin User` / `admin123`) or switch role from the header.
 
-1. Push this folder to a branch (e.g. `main`).
-2. Repo **Settings → Pages → Build and deployment → Source: Deploy from a branch**.
-3. Branch `main`, folder `/ (root)` → **Save**.
-4. Visit `https://<your-username>.github.io/<repo-name>/`.
+## Data
 
-## Design notes
-
-The page is built so that it degrades politely rather than breaking:
-
-| Decision | Why |
+| What | Where |
 | --- | --- |
-| Zero dependencies, no bundler | Nothing to audit, nothing to `npm install`, nothing to rot |
-| Dark theme by default, light theme on toggle | Both meet WCAG AA contrast; system preference is respected |
-| Semantic landmarks + `<details>` for the FAQ | Works with a screen reader and with a keyboard, no custom widget to maintain |
-| All JS is progressive enhancement | Content is visible with JavaScript disabled |
-| `prefers-reduced-motion` honoured | Animations switch themselves off |
-| Fluid `clamp()` type scale | 320 px phone → ultrawide without horizontal scroll |
+| Entries you create (dispatch / inward / transfer / new masters / users) | this browser's `localStorage`, key `mcs-erp-v1`, written on every change |
+| Item & customer master shipped in the file | hardcoded in `index.html`, re-merged on load (new records in the file still arrive) |
+| Backups | Export CSV, or Export to Excel (SheetJS) |
 
-## Contributing
+Header shows `Saved HH:MM` — that is auto-save confirming the write actually happened.
 
-1. Open an issue first so we don't duplicate work.
-2. Branch off `main`, one focused change per pull request.
-3. Keep files small and dependency-free — if it can't be read in one sitting, it doesn't belong here.
-4. Include one line describing the problem the change solves.
+## Notes for whoever maintains this
 
-## Disclaimer
-
-This is an unofficial, community-run project. It is **not affiliated with, sponsored by, or
-endorsed by Anthropic**. "Claude" is a trademark of its respective owner, used here descriptively
-to mean "free things for people who use Claude".
-
-## License
-
-Released under the [MIT License](LICENSE). Do what you want with it, attribution appreciated.
+- `index.html` is ~8.6k lines: markup, the `<style>` block, and all app logic in one file. Edit in place; the UI/UX polish layer at the end of the `<style>` block is separated and commented so it can be deleted wholesale.
+- **CDN dependencies:** Tailwind Play CDN, Font Awesome, SheetJS. If the office network blocks them the layout collapses — the page detects that and says so. For a permanent fix, vendor the three files next to `index.html` and point the tags at the local copies.
+- **Auth is cosmetic.** `handleLogin()` only sets a JS variable, so anyone with the file can read it in a text editor. Treat it as a role switch for one trusted operator, not as access control. Real security needs a backend.
+- `localStorage` is per-browser and per-machine: entries do not sync between the store PC and your laptop, and clearing browser data clears them. Move to a small server + SQLite/Postgres if more than one person must see the same numbers.
+- The dispatch table defaults to **today only** — older entries are hidden, never deleted. Use the `Today only` toggle in the preview card header.
