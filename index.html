@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#0f172a">
     <title>Dispatch & Sales Summary Report ERP - MCS</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,6 +29,11 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- The CSS below has requested "Inter" since the first commit, but the font was never
+         loaded, so every machine rendered a different fallback. Loaded explicitly now. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500&display=swap">
     <!-- SheetJS: was used by exportStyledExcelReport() but never included (ReferenceError). Loaded deferred. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
     <!-- SheetJS for Exporting Styled Excel Files -->
@@ -516,9 +523,309 @@
             body table { font-size: 9.5pt; }
             @page { size: A4 landscape; margin: 12mm; }
         }
+
+        /* ==================================================================
+           UX layer 2 - design system pass
+           Element+class scoped on purpose: Tailwind's Play CDN injects its
+           utilities after this block, so a bare `.text-xs` here would lose.
+           Scoping through `body`/`main` wins on specificity with zero
+           !important outside the print block.
+           ================================================================== */
+        :root {
+            --ux-line: #e2e8f0;
+            --ux-line-soft: #eef2f7;
+            --ux-surface: #fff;
+            --ux-surface-2: #f8fafc;
+            --ux-ink: #0f172a;
+            --ux-ink-2: #334155;
+            --ux-muted: #64748b;
+            --ux-brand: #0284c7;
+            --ux-brand-ink: #075985;
+            --ux-brand-soft: #e0f2fe;
+            --ux-ok: #059669;
+            --ux-warn: #b45309;
+            --ux-bad: #e11d48;
+            --ux-r-sm: 9px;
+            --ux-r: 12px;
+            --ux-r-lg: 14px;
+            --ux-row: 44px;
+            --ux-shadow-1: 0 1px 2px rgba(15,23,42,.05), 0 8px 20px -14px rgba(15,23,42,.20);
+            --ux-shadow-2: 0 2px 8px rgba(15,23,42,.06), 0 26px 48px -26px rgba(15,23,42,.34);
+            --ux-t: 160ms cubic-bezier(.4, 0, .2, 1);
+        }
+
+        /* one type rhythm replaces five competing micro sizes */
+        body { font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiased; }
+        body h1, body h2, body h3, body h4 { letter-spacing: -.015em; font-weight: 700; }
+        header h1 { font-size: 1.0625rem; letter-spacing: -.01em; }
+        body .text-xs:is(label) { font-size: .6875rem; line-height: 1.35; font-weight: 600; letter-spacing: .055em; text-transform: uppercase; color: #475569; }
+        body input.text-xs, body select.text-xs, body textarea.text-xs { font-size: .875rem; }
+        body table.text-xs { font-size: .8125rem; }
+        ::selection { background: rgba(2, 132, 199, .18); }
+        * { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+        *::-webkit-scrollbar { width: 10px; height: 10px; }
+        *::-webkit-scrollbar-thumb { background: #cbd5e1; border: 3px solid transparent; background-clip: content-box; border-radius: 99px; }
+        *::-webkit-scrollbar-thumb:hover { background: #94a3b8; background-clip: content-box; }
+
+        .ux-skip {
+            position: fixed; top: 8px; left: 8px; z-index: 200; transform: translateY(-200%);
+            background: var(--ux-brand); color: #fff; font-size: .8125rem; font-weight: 600;
+            padding: .5rem .85rem; border-radius: var(--ux-r-sm); transition: transform var(--ux-t);
+        }
+        .ux-skip:focus { transform: none; }
+
+        /* ---- app bar ---- */
+        header > div { min-height: 62px; }
+        .logo-badge { border-radius: 10px; padding: .3rem .5rem; }
+        #liveClock, .header-clock { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+        .header-user > div:first-child { line-height: 1.25; }
+        #uxAvatar {
+            width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center;
+            background: linear-gradient(140deg, #38bdf8, #0284c7); color: #fff;
+            font-size: .6875rem; font-weight: 800; letter-spacing: .02em;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28);
+        }
+        .ux-tool {
+            display: inline-flex; align-items: center; gap: .4rem; height: 30px; padding: 0 .55rem;
+            border-radius: 9px; background: rgba(148, 163, 184, .14); color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, .22); font-size: .75rem; font-weight: 500;
+            transition: background-color var(--ux-t), color var(--ux-t), border-color var(--ux-t);
+        }
+        .ux-tool:hover { background: rgba(148, 163, 184, .26); color: #fff; }
+        .ux-tool kbd {
+            font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .625rem; padding: .1rem .3rem;
+            border-radius: 5px; background: rgba(2, 6, 23, .5); border: 1px solid rgba(148, 163, 184, .25); color: #94a3b8;
+        }
+        @media (max-width: 1023px) { .ux-tool span { display: none; } .ux-tool kbd { display: none; } }
+
+        /* ---- sidebar ---- */
+        aside { border-right: 1px solid rgba(148, 163, 184, .14); }
+        aside nav button { min-height: 36px; font-size: .8125rem; }
+        aside nav button i { width: 16px; text-align: center; flex: none; }
+        aside button:hover, aside button:focus-visible { transform: none; background: rgba(148, 163, 184, .14); }
+        aside nav button[aria-current="page"] {
+            background: linear-gradient(90deg, rgba(56, 189, 248, .22), rgba(56, 189, 248, .06));
+            color: #fff; font-weight: 600; box-shadow: inset 2px 0 0 #7dd3fc;
+        }
+        aside nav button[aria-current="page"] i { color: #7dd3fc; }
+        .ux-count {
+            min-width: 20px; height: 18px; padding: 0 .3rem; border-radius: 99px; display: inline-grid; place-items: center;
+            background: rgba(148, 163, 184, .22); color: #e2e8f0;
+            font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .625rem; font-weight: 700;
+        }
+        .ux-count[data-tone="warn"] { background: rgba(245, 158, 11, .22); color: #fcd34d; }
+        .ux-count[data-tone="ok"] { background: rgba(16, 185, 129, .2); color: #6ee7b7; }
+        aside .ux-side-foot {
+            margin-top: auto; padding: .65rem .75rem; border-top: 1px solid rgba(148, 163, 184, .16);
+            display: flex; align-items: center; gap: .45rem; font-size: .6875rem; color: #94a3b8;
+        }
+        aside .ux-side-foot .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ux-ok); box-shadow: 0 0 0 3px rgba(5, 150, 105, .18); }
+
+        /* ---- tab strip ---- */
+        #tabContainer { padding-left: 1rem; padding-right: .5rem; gap: .25rem; align-items: flex-end; min-height: 42px; border-bottom: 1px solid var(--ux-line); }
+        #tabContainer [role="tab"] {
+            height: 34px; display: flex; align-items: center; gap: .45rem; padding: 0 .5rem 0 .7rem;
+            border: 1px solid transparent; border-bottom: 0; border-radius: 10px 10px 0 0;
+            background: transparent; position: relative; transition: background-color var(--ux-t), color var(--ux-t);
+        }
+        #tabContainer [role="tab"]:hover { background: rgba(255, 255, 255, .55); }
+        #tabContainer [role="tab"][aria-selected="true"] {
+            background: var(--ux-surface); border-color: var(--ux-line);
+            box-shadow: 0 -1px 0 var(--ux-brand) inset, 0 1px 0 var(--ux-surface);
+            margin-bottom: -1px; padding-bottom: 1px;
+        }
+        #tabContainer [role="tab"] button {
+            width: 20px; height: 20px; display: grid; place-items: center; border-radius: 6px; opacity: .5;
+            transition: opacity var(--ux-t), background-color var(--ux-t);
+        }
+        #tabContainer [role="tab"]:hover button, #tabContainer [role="tab"] button:focus-visible { opacity: 1; background: rgba(15, 23, 42, .08); }
+        #tabContainer [role="tab"] button:hover { background: rgba(225, 29, 72, .12); color: var(--ux-bad); }
+        #uxNewTab {
+            flex: none; align-self: center; width: 26px; height: 26px; margin-left: .25rem; border-radius: 7px;
+            display: grid; place-items: center; color: #64748b; background: rgba(148, 163, 184, .16);
+            border: 1px solid transparent; font-size: .75rem; transition: all var(--ux-t);
+        }
+        #uxNewTab:hover { background: var(--ux-brand-soft); color: var(--ux-brand-ink); }
+
+        /* ---- cards ---- */
+        main #mainCard, main #previewCard { border-radius: var(--ux-r-lg); border-color: var(--ux-line); box-shadow: var(--ux-shadow-1); }
+        main #mainCard:hover, main #previewCard:hover { box-shadow: var(--ux-shadow-1); transform: none; }
+        #mainCard > div:first-child, #previewCard > div:first-child {
+            background: linear-gradient(180deg, #fff, var(--ux-surface-2)); border-bottom-color: var(--ux-line);
+        }
+        #tabTitle, #tableTitle { font-size: .9375rem; display: flex; align-items: center; gap: .5rem; }
+        #tableSubtitle { font-size: .75rem; color: var(--ux-muted); }
+
+        /* ---- forms ---- */
+        main form.pane-content { gap: 1.15rem 1.15rem; }
+        main form.pane-content > div { padding: .35rem; border-radius: var(--ux-r); transition: background-color var(--ux-t); }
+        main form.pane-content > div:focus-within { background: rgba(2, 132, 199, .045); box-shadow: 0 0 0 1px rgba(2, 132, 199, .10); }
+        input, select, textarea {
+            min-height: 40px; border-color: #cbd5e1;
+            padding-left: .65rem; padding-right: .65rem; background: #fff;
+            box-shadow: inset 0 1px 1px rgba(15, 23, 42, .04); transition: border-color var(--ux-t), box-shadow var(--ux-t), background-color var(--ux-t);
+        }
+        input.rounded-lg, select.rounded-lg, textarea.rounded-lg { border-radius: var(--ux-r-sm); }
+        input:hover:not(:disabled), select:hover:not(:disabled) { border-color: #94a3b8; }
+        input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(2, 132, 199, .16) !important; transform: none; }
+        select {
+            appearance: none; -webkit-appearance: none; padding-right: 2rem;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5l5-5' fill='none' stroke='%2364748b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+            background-repeat: no-repeat; background-position: right .6rem center;
+        }
+        input[type="date"] { font-variant-numeric: tabular-nums; }
+        input[readonly] { background: var(--ux-surface-2); border-style: dashed; box-shadow: none; }
+        .ux-field-bad { animation: uxNudge .3s ease; }
+        .ux-field-bad input, .ux-field-bad select, input.ux-field-bad, select.ux-field-bad {
+            border-color: var(--ux-bad) !important; box-shadow: 0 0 0 3px rgba(225, 29, 72, .14) !important;
+        }
+        @keyframes uxNudge { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+
+        /* ---- buttons, uniformly, without touching their markup ---- */
+        main button[class*="bg-sky-600"], main button[class*="bg-emerald-600"], main button[type="submit"],
+        #pane-dispatchReport button, #pane-stockStatement button, #pane-itemMovement button {
+            font-weight: 600; border-radius: var(--ux-r-sm); padding: .5rem .8rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .08); transition: transform var(--ux-t), box-shadow var(--ux-t), background-color var(--ux-t), filter var(--ux-t);
+        }
+        main button[class*="bg-sky-600"]:hover, main button[class*="bg-emerald-600"]:hover, main button[type="submit"]:hover { transform: translateY(-1px); box-shadow: 0 6px 14px -6px rgba(15, 23, 42, .35); filter: saturate(1.08); }
+        main button[class*="bg-rose-50"] { border: 1px solid #fecdd3; font-weight: 600; }
+        main button[class*="bg-rose-50"]:hover { background: #ffe4e6; }
+        #tableBody button { opacity: .62; }
+        tr:hover > td button, tr:focus-within > td button { opacity: 1; }
+
+        /* ---- KPI cards become shortcuts ---- */
+        .kpi-card { border-radius: var(--ux-r); box-shadow: var(--ux-shadow-1); cursor: pointer; text-align: left; width: 100%; }
+        .kpi-card::before { height: 3px; }
+        .kpi-card:hover { border-color: #bae6fd; background: linear-gradient(180deg, #fff, #f6fbff); }
+        .kpi-card:hover .kpi-icon { transform: scale(1.06); }
+        .kpi-card > div:nth-child(2) > div:first-child { font-size: 1.75rem; line-height: 1.1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+        .kpi-icon { transition: transform var(--ux-t); }
+        .kpi-hint { font-size: .625rem; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; }
+        .kpi-card:hover .kpi-hint { color: var(--ux-brand); }
+
+        /* ---- tables ---- */
+        main .table-shell, main table { border-radius: var(--ux-r); }
+        main table thead th {
+            background: var(--ux-surface-2); color: #475569; font-size: .6875rem; text-transform: uppercase;
+            letter-spacing: .05em; white-space: nowrap; padding: .6rem 1rem; height: 38px;
+        }
+        main table thead th[data-sortable] { cursor: pointer; user-select: none; }
+        main table thead th[data-sortable]:hover { color: var(--ux-brand-ink); background: var(--ux-brand-soft); }
+        main table thead th[data-sortable]::after { content: "\2195"; margin-left: .35rem; opacity: .4; font-size: .75rem; }
+        main table thead th[aria-sort="ascending"]::after { content: "\2191"; opacity: 1; color: var(--ux-brand); }
+        main table thead th[aria-sort="descending"]::after { content: "\2193"; opacity: 1; color: var(--ux-brand); }
+        main table tbody td { height: var(--ux-row); padding-top: .4rem; padding-bottom: .4rem; }
+        main table td.ux-num { text-align: right; font-variant-numeric: tabular-nums; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .78rem; }
+        main table tbody tr { border-top: 1px solid var(--ux-line-soft); }
+        main table tbody tr:nth-child(even) { background: #fcfdff; }
+        main table tbody tr:hover { background: #f0f9ff; }
+        main table td:first-child { color: var(--ux-ink-2); }
+        main table tbody tr.ux-flash { animation: uxFlash 1.5s ease-out; }
+        @keyframes uxFlash { from { background: rgba(56, 189, 248, .35); } to { background: transparent; } }
+        main table td[colspan] { color: var(--ux-muted); padding: 2.5rem 1rem; background: repeating-linear-gradient(135deg, #fff, #fff 12px, var(--ux-surface-2) 12px, var(--ux-surface-2) 24px); }
+        .ux-filter {
+            display: flex; align-items: center; gap: .4rem; height: 34px; padding: 0 .5rem;
+            border: 1px solid var(--ux-line); border-radius: var(--ux-r-sm); background: #fff; min-width: 190px;
+            transition: border-color var(--ux-t), box-shadow var(--ux-t);
+        }
+        .ux-filter:focus-within { border-color: var(--ux-brand); box-shadow: 0 0 0 3px rgba(2, 132, 199, .14); }
+        .ux-filter i { color: #94a3b8; font-size: .75rem; }
+        .ux-filter input { border: 0; box-shadow: none !important; min-height: 0; padding: 0; width: 100%; font-size: .8125rem; }
+        .ux-filter input:focus { background: transparent; }
+        .ux-filter kbd { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .625rem; color: #94a3b8; border: 1px solid var(--ux-line); border-radius: 5px; padding: .05rem .25rem; }
+        .ux-filter kbd.hide { display: none; }
+        .ux-filter .ux-clear { border: 0; background: none; color: #94a3b8; cursor: pointer; font-size: .75rem; padding: 0 .15rem; }
+        .ux-filter .ux-clear:hover { color: var(--ux-bad); }
+        .ux-matched { font-size: .75rem; color: var(--ux-muted); font-variant-numeric: tabular-nums; }
+
+        /* ---- density ---- */
+        body[data-density="compact"] { --ux-row: 32px; }
+        body[data-density="compact"] main table { font-size: .75rem; }
+        body[data-density="compact"] main table tbody td { padding-top: .15rem; padding-bottom: .15rem; }
+
+        /* ---- toast ---- */
+        .ux-toast-action {
+            border: 1px solid rgba(255, 255, 255, .5); background: rgba(255, 255, 255, .16); color: #fff;
+            font-size: .75rem; font-weight: 700; padding: .25rem .6rem; border-radius: 99px; transition: background-color var(--ux-t);
+        }
+        .ux-toast-action:hover { background: rgba(255, 255, 255, .3); }
+        main #toast { border-radius: var(--ux-r); box-shadow: var(--ux-shadow-2); }
+        @media (max-width: 768px) { main #toast { bottom: calc(1rem + env(safe-area-inset-bottom)); } }
+
+        /* ---- command palette ---- */
+        .ux-overlay { position: fixed; inset: 0; z-index: 150; background: rgba(15, 23, 42, .48); backdrop-filter: blur(3px); animation: uxIn .16s ease; }
+        @keyframes uxIn { from { opacity: 0; } }
+        .ux-palette {
+            position: fixed; z-index: 151; top: 12vh; left: 50%; transform: translateX(-50%);
+            width: min(620px, calc(100vw - 2rem)); background: var(--ux-surface); border: 1px solid var(--ux-line);
+            border-radius: var(--ux-r-lg); box-shadow: var(--ux-shadow-2); overflow: hidden; display: flex; flex-direction: column;
+            animation: uxPop .18s cubic-bezier(.16, 1, .3, 1);
+        }
+        @keyframes uxPop { from { opacity: 0; transform: translate(-50%, -8px) scale(.985); } }
+        .ux-palette input {
+            border: 0; border-radius: 0; box-shadow: none !important; height: 52px;
+            font-size: 1rem; padding: 0 1rem; background: transparent;
+        }
+        .ux-palette ul { list-style: none; margin: 0; padding: .35rem; max-height: 52vh; overflow-y: auto; border-top: 1px solid var(--ux-line-soft); }
+        .ux-palette li { display: flex; align-items: center; gap: .65rem; padding: .55rem .65rem; border-radius: var(--ux-r-sm); cursor: pointer; font-size: .875rem; }
+        .ux-palette li .ico { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--ux-surface-2); color: var(--ux-brand); font-size: .75rem; flex: none; border: 1px solid var(--ux-line); }
+        .ux-palette li .sub { margin-left: auto; font-size: .6875rem; color: #94a3b8; }
+        .ux-palette li[data-on="1"] { background: var(--ux-brand-soft); color: var(--ux-brand-ink); box-shadow: inset 0 0 0 1px rgba(2, 132, 199, .22); }
+        .ux-palette .grp { padding: .55rem .65rem .2rem; font-size: .625rem; letter-spacing: .09em; text-transform: uppercase; color: #94a3b8; font-weight: 700; }
+        .ux-palette footer { display: flex; gap: .85rem; padding: .5rem .85rem; border-top: 1px solid var(--ux-line-soft); background: var(--ux-surface-2); font-size: .6875rem; color: var(--ux-muted); }
+        .ux-palette footer kbd { font-family: "JetBrains Mono", ui-monospace, monospace; border: 1px solid var(--ux-line); background: #fff; border-radius: 5px; padding: .05rem .28rem; }
+
+        /* ---- confirm dialog (replaces the browser's own) ---- */
+        .ux-dialog {
+            position: fixed; z-index: 151; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            width: min(440px, calc(100vw - 2rem)); background: var(--ux-surface); border-radius: var(--ux-r-lg);
+            border: 1px solid var(--ux-line); box-shadow: var(--ux-shadow-2); padding: 1.25rem; animation: uxDlg .2s cubic-bezier(.16, 1, .3, 1);
+        }
+        @keyframes uxDlg { from { opacity: 0; transform: translate(-50%, -46%) scale(.97); } }
+        .ux-dialog h2 { font-size: 1rem; margin: 0 0 .35rem; display: flex; align-items: center; gap: .5rem; }
+        .ux-dialog p { font-size: .8125rem; color: var(--ux-muted); margin: 0 0 1rem; }
+        .ux-dialog .row { display: flex; justify-content: flex-end; gap: .5rem; }
+        .ux-dialog .danger { background: var(--ux-bad); color: #fff; font-weight: 600; border-radius: var(--ux-r-sm); padding: .5rem .9rem; }
+        .ux-dialog .danger:hover { filter: brightness(1.06); }
+        .ux-dialog .cancel { border: 1px solid var(--ux-line); border-radius: var(--ux-r-sm); padding: .5rem .9rem; font-weight: 600; color: var(--ux-ink-2); }
+        .ux-dialog .cancel:hover { background: var(--ux-surface-2); }
+
+        /* ---- print: this screen's real deliverable ---- */
+        #printHead { display: none; }
+        @media print {
+            #printHead { display: flex !important; justify-content: space-between; align-items: flex-end; gap: 1rem; padding-bottom: .5rem; margin-bottom: .75rem; border-bottom: 2px solid #0f172a; }
+            #printHead b { font-size: 15pt; letter-spacing: -.02em; }
+            #printHead .ph-left, #printHead .ph-right { display: grid; }
+            #printHead span { font-size: 8.5pt; color: #475569; }
+            #printHead .ph-right { text-align: right; }
+            #printHead .ph-right span:first-child { font-weight: 700; font-size: 10pt; color: #0f172a; }
+            main table tbody tr { break-inside: avoid; }
+            main table thead { display: table-header-group; }
+            main table td, main table th { border-bottom: .5pt solid #cbd5e1 !important; }
+            .ux-filter, .ux-no-print { display: none !important; }
+            /* filter bars of the three report panes (never the tables: those are siblings) */
+            #pane-dispatchReport > .grid, #pane-stockStatement > .grid, #pane-itemMovement > .flex { display: none !important; }
+            /* Manage Users prints as a list, not as the create-user form */
+            #pane-manageUsers > .grid > :first-child { display: none !important; }
+            /* on an entry tab the form itself is what must not print; JS flags that case */
+            body.ux-print-entries #mainCard { display: none !important; }
+            #mainCard, #previewCard { box-shadow: none !important; border: 0 !important; }
+            #mainCard > div:first-child, #previewCard > div:first-child { display: none !important; }
+        }
+
+        /* ---- small screens ---- */
+        @media (max-width: 768px) {
+            header > div { min-height: 56px; }
+            header h1 { font-size: .9375rem; }
+            main .p-6 { padding: .85rem; }
+            #tabContainer { min-height: 40px; padding-left: .6rem; }
+            .ux-filter { min-width: 0; flex: 1 1 100%; }
+            main button[class*="bg-sky-600"], main button[type="submit"] { width: 100%; }
+        }
     </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+    <a class="ux-skip" href="#uxMain">Skip to main content</a>
 
     <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
@@ -573,6 +880,14 @@
                 </div>
             </div>
             <div class="flex items-center space-x-4 flex-shrink-0">
+                <div id="uxTools" class="flex items-center gap-1.5">
+                    <button id="paletteBtn" type="button" class="ux-tool" title="Jump to a module or run an action (Ctrl+K)">
+                        <i class="fa-solid fa-magnifying-glass"></i><span>Jump to</span><kbd>Ctrl K</kbd>
+                    </button>
+                    <button id="densityBtn" type="button" class="ux-tool" aria-pressed="false" title="Switch table density">
+                        <i class="fa-solid fa-bars-staggered"></i><span class="hidden xl:inline">Density</span>
+                    </button>
+                </div>
                 <span id="liveClock" class="header-clock text-xs bg-slate-800 px-3 py-1 rounded-full text-slate-300 border border-slate-700 hidden sm:inline-block"></span>
                 <div class="header-user flex items-center space-x-3 border-l border-slate-700 pl-4">
                     <div class="text-right">
@@ -681,7 +996,7 @@
         </aside>
 
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-y-auto bg-slate-50 flex flex-col">
+        <main id="uxMain" class="flex-1 overflow-y-auto bg-slate-50 flex flex-col">
             
             <!-- TOP TAB BAR SYSTEM -->
             <div class="bg-slate-200 border-b border-slate-300 px-4 pt-2 flex items-center space-x-1 overflow-x-auto custom-scrollbar" id="tabContainer">
@@ -697,7 +1012,10 @@
                         <i id="toastIcon" class="fa-solid fa-circle-check text-xl"></i>
                         <span id="toastMessage" class="text-sm font-medium">Message here</span>
                     </div>
-                    <button onclick="hideToast()" class="text-white hover:opacity-75"><i class="fa-solid fa-xmark"></i></button>
+                    <div class="flex items-center gap-2">
+                        <button id="toastAction" type="button" class="ux-toast-action hidden"></button>
+                        <button onclick="hideToast()" class="text-white hover:opacity-75" aria-label="Dismiss notification"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </div>
 
                 <!-- Main Card View Container -->
@@ -1163,6 +1481,12 @@
                     </div>
                 </div>
 
+                <!-- Printed reports get a letterhead; hidden on screen -->
+                <div id="printHead" aria-hidden="true">
+                    <div class="ph-left"><b>MCS</b><span>Mining Chemical Suppliers &middot; Tyre-Lub Division</span></div>
+                    <div class="ph-right"><span id="printTitle">Report</span><span id="printMeta"></span></div>
+                </div>
+
                 <!-- Preview Table Card -->
                 <div id="previewCard" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="border-b border-slate-200 px-6 py-4 bg-slate-50/50 flex flex-wrap justify-between items-center gap-4">
@@ -1171,6 +1495,11 @@
                             <p id="tableSubtitle" class="text-xs text-slate-500">Auto-saved in this browser &middot; survives refresh</p>
                         </div>
                         <div id="previewControls" class="flex flex-wrap items-center gap-2">
+                            <div class="ux-filter">
+                                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                                <input id="tableFilter" type="search" placeholder="Filter rows" aria-label="Filter the rows below" autocomplete="off">
+                                <kbd>/</kbd>
+                            </div>
                             <button onclick="window.print()" title="Print this report (Ctrl+P)"
                                 class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs px-3 py-2 rounded-md font-medium transition-colors flex items-center gap-1.5">
                                 <i class="fa-solid fa-print"></i> Print
@@ -7889,6 +8218,7 @@
 
                 if (reqQty > availStock) {
                     showToast(`🚫 Insufficient Stock! Only ${availStock} available in ${entry.store}.`, 'error');
+                    uxFlagField(formElement, 'qty');
                     return;
                 }
             }
@@ -7904,6 +8234,7 @@
 
                 if (reqQty > availStock) {
                     showToast(`🚫 Insufficient Stock! Only ${availStock} available in ${entry.fromStore}.`, 'error');
+                    uxFlagField(formElement, 'qty');
                     return;
                 }
             }
@@ -8607,6 +8938,614 @@
             erpMarkNav(activeTabKey || 'home');
             erpScopeToggle();
             erpCdnTripwire();
+        });
+
+        /* ==================================================================
+           UX layer 2 - command palette, undoable deletes, in-app confirm,
+           sortable + filterable tables, live counts, density, print sheet.
+           Appended at the end of the app's own script on purpose: duplicate
+           function declarations let a later definition win, so the three
+           destructive actions are re-declared here with better behaviour and
+           everything else is wrapped instead of edited.
+           ================================================================== */
+
+        const UI_KEY = 'mcs-erp-ui';
+        const uxUi = {
+            read() { try { return JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } },
+            write(patch) {
+                const next = Object.assign(this.read(), patch);
+                try { localStorage.setItem(UI_KEY, JSON.stringify(next)); } catch (e) { /* private mode */ }
+            }
+        };
+
+        /* ---------- in-app confirm (the browser's own dialog cannot be styled) ---------- */
+        function uxConfirm(opts) {
+            return new Promise(function (resolve) {
+                const prev = document.activeElement;
+                const overlay = document.createElement('div');
+                overlay.className = 'ux-overlay';
+                const box = document.createElement('div');
+                box.className = 'ux-dialog';
+                box.setAttribute('role', 'alertdialog');
+                box.setAttribute('aria-modal', 'true');
+                box.setAttribute('aria-labelledby', 'uxDlgTitle');
+                const tone = opts.danger ? '#e11d48' : '#0284c7';
+                box.innerHTML =
+                    '<h2 id="uxDlgTitle"><i class="fa-solid ' + (opts.icon || 'fa-circle-question') + '" style="color:' + tone + '"></i> ' + esc(opts.title) + '</h2>' +
+                    '<p>' + esc(opts.body || '') + '</p>' +
+                    '<div class="row"><button type="button" class="cancel">Cancel</button>' +
+                    '<button type="button" class="danger">' + esc(opts.ok || 'Confirm') + '</button></div>';
+                document.body.append(overlay, box);
+
+                const cancel = box.querySelector('.cancel');
+                const accept = box.querySelector('.danger');
+                let settled = false;
+                function close(answer) {
+                    if (settled) return;
+                    settled = true;
+                    overlay.remove(); box.remove();
+                    if (prev && prev.focus) prev.focus();
+                    resolve(answer);
+                }
+                cancel.addEventListener('click', function () { close(false); });
+                accept.addEventListener('click', function () { close(true); });
+                overlay.addEventListener('click', function () { close(false); });
+                box.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') { e.preventDefault(); close(false); return; }
+                    if (e.key !== 'Tab') return;
+                    const f = [cancel, accept];
+                    const i = f.indexOf(document.activeElement);
+                    e.preventDefault();
+                    f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus();
+                });
+                accept.focus();
+            });
+        }
+
+        /* ---------- destructive actions, re-declared with confirm + undo ---------- */
+        function deleteEntry(type, indexInArray) {
+            if (currentUser.role !== 'ADMIN') {
+                showToast('🚫 Authority Denied! Only Admin User can delete entries.', 'error');
+                return;
+            }
+            const row = (database[type] || [])[indexInArray];
+            if (!row) return;
+
+            uxConfirm({
+                title: 'Delete this entry?',
+                body: 'Stock for this row will be recalculated immediately. You get a few seconds to undo.',
+                ok: 'Delete entry', danger: true, icon: 'fa-trash-can'
+            }).then(function (yes) {
+                if (!yes) return;
+                database[type].splice(indexInArray, 1);
+                updateKPIs();
+                renderTable();
+                if (type === 'dispatch' || type === 'inward' || type === 'transfer') {
+                    renderDispatchReport();
+                    renderStockStatement();
+                }
+                erpSave();
+                uxToastUndo(type, indexInArray, row);
+            });
+        }
+
+        function uxToastUndo(type, indexInArray, row) {
+            showToast('Record deleted.', 'info');
+            const btn = document.getElementById('toastAction');
+            if (!btn) return;
+            btn.textContent = 'Undo';
+            btn.classList.remove('hidden');
+            btn.onclick = function () {
+                btn.classList.add('hidden'); btn.textContent = ''; btn.onclick = null;
+                database[type].splice(Math.min(indexInArray, database[type].length), 0, row);
+                updateKPIs();
+                renderTable();
+                if (type === 'dispatch' || type === 'inward' || type === 'transfer') {
+                    renderDispatchReport(); renderStockStatement();
+                }
+                erpSave();
+                uxFlashRow(row);
+                showToast('Delete undone - the row is back.', 'success');
+            };
+        }
+
+        function clearCurrentData() {
+            if (currentUser.role !== 'ADMIN') {
+                showToast('🚫 Authority Denied! Only Admin can clear data.', 'error');
+                return;
+            }
+            const label = (formConfigs[activeTabKey] || {}).shortLabel || 'this view';
+            const rows = (database[activeTabKey] || []).length;
+            if (!rows) { showToast('Nothing to clear in ' + label + '.', 'info'); return; }
+
+            uxConfirm({
+                title: 'Clear ' + label + '?',
+                body: activeTabKey === 'dispatch'
+                    ? 'Only today\'s dispatch rows are removed (' + rows + ' stored in total). This writes to saved data immediately.'
+                    : 'All ' + rows + ' stored rows in this module will be removed. This cannot be undone.',
+                ok: 'Clear rows', danger: true, icon: 'fa-broom'
+            }).then(function (yes) {
+                if (!yes) return;
+                const backup = JSON.parse(JSON.stringify(database[activeTabKey] || []));
+                if (activeTabKey === 'dispatch') {
+                    const today = getTodayDate();
+                    database.dispatch = database.dispatch.filter(r => r.date !== today);
+                } else {
+                    database[activeTabKey] = [];
+                }
+                updateKPIs();
+                renderTable();
+                erpSave();
+                showToast(rows + ' row(s) cleared.', 'info');
+                const btn = document.getElementById('toastAction');
+                if (!btn) return;
+                btn.textContent = 'Undo';
+                btn.classList.remove('hidden');
+                btn.onclick = function () {
+                    btn.classList.add('hidden'); btn.onclick = null;
+                    database[activeTabKey] = backup;
+                    updateKPIs(); renderTable(); erpSave();
+                    showToast('Restored ' + backup.length + ' row(s).', 'success');
+                };
+            });
+        }
+
+        function deleteUser(index) {
+            if (currentUser.role !== 'ADMIN') {
+                showToast('Only an ADMIN can remove users.', 'error');
+                return;
+            }
+            const user = users[index];
+            if (!user || user.username === currentUser.name) {
+                showToast('The current user cannot be removed.', 'error');
+                return;
+            }
+            uxConfirm({ title: 'Remove ' + user.username + '?', body: 'Role: ' + user.role + '. They will lose access on the next login.', ok: 'Remove user', danger: true, icon: 'fa-user-minus' })
+                .then(function (yes) {
+                    if (!yes) return;
+                    users.splice(index, 1);
+                    renderUsersTable();
+                    erpSave();
+                    showToast('User removed.', 'info');
+                });
+        }
+
+        function uxFlashRow(row) {
+            const probe = String(row.bdlNo || row.customerName || row.itemDesc || row.truckNo || '');
+            if (!probe) return;
+            const hit = [].slice.call(document.querySelectorAll('#tableBody tr')).find(tr => tr.textContent.indexOf(probe) > -1);
+            if (hit) { hit.classList.remove('ux-flash'); void hit.offsetWidth; hit.classList.add('ux-flash'); if (hit.scrollIntoView) hit.scrollIntoView({ block: 'center' }); }
+        }
+
+        function uxFlagField(form, name) {
+            const ctl = form && form.querySelector('[name="' + name + '"]');
+            if (!ctl) return;
+            const box = ctl.parentElement || ctl;
+            box.classList.add('ux-field-bad');
+            ctl.focus({ preventScroll: true });
+            if (box.scrollIntoView) box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            setTimeout(function () { box.classList.remove('ux-field-bad'); }, 1600);
+        }
+
+        /* ---------- column sort + numeric alignment, applied after every render ---------- */
+        function uxNumCell(c) {
+            const txt = (c.textContent || '').trim();
+            return !!txt && txt !== '-' && /^[-+()$€₹\d][\d.,\s€$₹%()\-+]*$/.test(txt);
+        }
+
+        function uxDecorate() {
+            document.querySelectorAll('main table').forEach(function (table) {
+                if (!table.isConnected) return;
+                const ths = table.querySelectorAll('thead th');
+                ths.forEach(function (th, ci) {
+                    const rows = [].slice.call(table.querySelectorAll('tbody tr'));
+                    const cells = rows.map(r => r.cells[ci]).filter(Boolean);
+                    const isAction = cells.some(c => c.querySelector('button,a'));
+                    const numeric = cells.length > 2 && !isAction && cells.every(uxNumCell);
+                    cells.forEach(function (c) { if (c.classList.contains('ux-num') !== numeric) c.classList.toggle('ux-num', numeric); });
+                    if (isAction || !ths.length) return;
+                    if (th.hasAttribute('data-sortable')) return;
+                    th.setAttribute('data-sortable', '');
+                    th.setAttribute('tabindex', '0');
+                    th.title = 'Sort by ' + th.textContent.trim();
+                });
+            });
+
+            document.querySelectorAll('.kpi-card').forEach(function (card, i) {
+                if (card.dataset.uxKpi) return;
+                card.dataset.uxKpi = '1';
+                const target = ['item', 'customer', 'dispatch'][i];
+                if (!target) return;
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+                card.title = 'Open ' + ((formConfigs[target] || {}).shortLabel || target);
+                const hint = document.createElement('div');
+                hint.className = 'kpi-hint';
+                hint.textContent = 'Open ' + ((formConfigs[target] || {}).shortLabel || target);
+                card.querySelector('div > div:last-child').appendChild(hint);
+                const go = function () { openTab(target); };
+                card.addEventListener('click', go);
+                card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+            });
+
+            uxCounts();
+        }
+
+        /* renders replace innerHTML (headers included), so decorate on mutation instead of
+           on a fixed list of call sites - every future render is covered automatically.
+           All writes below are guarded to be no-ops when already correct, which keeps
+           this observer from feeding itself. */
+        let uxQueued = false;
+        function uxSchedule() {
+            if (uxQueued) return;
+            uxQueued = true;
+            Promise.resolve().then(function () {
+                uxQueued = false;
+                try { uxDecorate(); } catch (e) { console.warn('[ux] decorate skipped:', e.message); }
+            });
+        }
+
+        function uxSort(th) {
+            const table = th.closest('table');
+            const tbody = table.tBodies[0];
+            if (!tbody || tbody.rows.length < 2) return;
+            const heads = [].slice.call(table.querySelectorAll('thead th'));
+            const col = heads.indexOf(th);
+            const dir = th.getAttribute('aria-sort') === 'ascending' ? 'descending' : 'ascending';
+            heads.forEach(function (h) { h.removeAttribute('aria-sort'); });
+            th.setAttribute('aria-sort', dir);
+
+            const rows = [].slice.call(tbody.rows);
+            const parsed = rows.map(function (r, i) {
+                const raw = (r.cells[col] ? r.cells[col].textContent : '').trim();
+                const num = parseFloat(raw.replace(/[^0-9.\-]/g, ''));
+                return { r: r, i: i, v: /^[-+]?[\d.,]+$/.test(raw) && !isNaN(num) ? num : raw.toLowerCase() };
+            });
+            parsed.sort(function (a, b) {
+                let d;
+                if (typeof a.v === 'number' && typeof b.v === 'number') d = a.v - b.v;
+                else d = String(a.v).localeCompare(String(b.v), undefined, { numeric: true, sensitivity: 'base' });
+                return (dir === 'ascending' ? d : -d) || (a.i - b.i);
+            });
+            const frag = document.createDocumentFragment();
+            parsed.forEach(function (p) { frag.appendChild(p.r); });
+            tbody.appendChild(frag);
+        }
+
+        document.addEventListener('click', function (e) {
+            const th = e.target.closest && e.target.closest('th[data-sortable]');
+            if (th) { uxSort(th); return; }
+            const close = e.target.closest && e.target.closest('#tabContainer [role="tab"] button');
+            if (close) e.stopPropagation();
+        });
+        document.addEventListener('keydown', function (e) {
+            const th = e.target.closest && e.target.closest('th[data-sortable]');
+            if (th && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); uxSort(th); }
+        });
+
+        /* ---------- row filter for the entries preview ---------- */
+        function uxFilterRows(term) {
+            const body = document.getElementById('tableBody');
+            if (!body) return;
+            const q = (term || '').toLowerCase().trim();
+            let shown = 0;
+            [].slice.call(body.rows).forEach(function (tr) {
+                const hit = !q || tr.textContent.toLowerCase().indexOf(q) > -1;
+                tr.hidden = !hit;
+                if (hit) shown++;
+            });
+            let note = document.getElementById('uxMatch');
+            if (q && body.rows.length) {
+                if (!note) {
+                    note = document.createElement('span');
+                    note.id = 'uxMatch'; note.className = 'ux-matched';
+                    document.getElementById('tableTitle').appendChild(note);
+                }
+                note.textContent = shown + ' / ' + body.rows.length;
+            } else if (note) { note.remove(); }
+            const kbd = document.querySelector('.ux-filter kbd');
+            if (kbd) kbd.classList.toggle('hide', !!q);
+        }
+
+        /* ---------- live counts in the sidebar ---------- */
+        function uxCounts() {
+            const today = getTodayDate();
+            const map = {
+                dispatch: { n: (database.dispatch || []).filter(r => r.date === today).length, hint: 'today' },
+                inward: { n: (database.inward || []).filter(r => Number(r.shortQty) > 0).length, hint: 'shortages', tone: 'warn' },
+                transfer: { n: (database.transfer || []).length, hint: 'total' },
+                customer: { n: (database.customer || []).length, hint: 'masters' },
+                item: { n: (database.item || []).length, hint: 'masters' },
+                manageUsers: { n: (users || []).length, hint: 'users' }
+            };
+            Object.keys(map).forEach(function (key) {
+                const btn = [].slice.call(document.querySelectorAll('aside nav button'))
+                    .find(b => (b.getAttribute('onclick') || '').indexOf("'" + key + "'") > -1);
+                if (!btn) return;
+                let badge = btn.querySelector('.ux-count');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'ux-count';
+                    btn.appendChild(badge);
+                }
+                const val = map[key].n ? String(map[key].n) : '';
+                if (badge.textContent !== val) badge.textContent = val;
+                badge.dataset.tone = map[key].tone || (map[key].n ? 'ok' : '');
+                badge.title = map[key].n + ' ' + map[key].hint;
+                badge.setAttribute('aria-hidden', 'true');
+            });
+
+            const foot = document.querySelector('aside .ux-side-foot');
+            if (foot) {
+                const txt = (document.getElementById('savedBadge') || {}).textContent || 'storage idle';
+                const label = foot.querySelector('span:not(.dot)');
+                const live = txt.trim().toLowerCase().indexOf('saved') === 0;
+                const next = txt.trim() || 'Ready';
+                if (label && label.textContent !== next) label.textContent = next;
+                foot.querySelector('.dot').dataset.live = live ? '1' : '0';
+                foot.title = 'Entries are stored in this browser only - not on a server.';
+            }
+        }
+
+        /* ---------- command palette ---------- */
+        function uxCmdItems() {
+            const mods = Object.keys(formConfigs).map(function (key) {
+                const c = formConfigs[key];
+                return {
+                    grp: 'Modules', label: c.shortLabel, icon: c.icon,
+                    sub: (database[key] ? database[key].length + ' records' : 'dashboard'),
+                    keys: (c.shortLabel + ' ' + key).toLowerCase(),
+                    run: function () { openTab(key); }
+                };
+            });
+            const acts = [
+                { label: 'New dispatch entry', icon: 'fa-plus', run: function () { openTab('dispatch'); const f = document.getElementById('pane-dispatch'); if (f) f.querySelector('input,select').focus(); } },
+                { label: 'Export current table as CSV', icon: 'fa-file-csv', run: function () { exportToCSV(); } },
+                { label: 'Print this report', icon: 'fa-print', run: function () { window.print(); } },
+                { label: window.showAllDispatch ? 'Dispatch: show today only' : 'Dispatch: show all dates', icon: 'fa-calendar-days', run: function () { window.showAllDispatch = !window.showAllDispatch; openTab('dispatch'); renderTable(); } },
+                { label: 'Collapse or expand the menu', icon: 'fa-bars', run: function () { toggleSidebar(); } },
+                { label: 'Switch density (comfort / compact)', icon: 'fa-bars-staggered', run: function () { uxDensity(); } },
+                { label: 'Switch user or role', icon: 'fa-right-from-bracket', run: function () { showLoginModal(); } },
+                { label: 'Save a copy now', icon: 'fa-floppy-disk', run: function () { erpSave(); showToast('Saved to this browser', 'success'); } }
+            ].map(function (a) {
+                return { grp: 'Actions', label: a.label, icon: a.icon, sub: 'action', keys: (a.label + ' ' + a.icon).toLowerCase(), run: a.run };
+            });
+            return mods.concat(acts);
+        }
+
+        function uxPalette() {
+            if (document.querySelector('.ux-palette')) { document.querySelector('.ux-palette input').focus(); document.querySelector('.ux-palette input').select(); return; }
+            const prev = document.activeElement;
+            const overlay = document.createElement('div');
+            overlay.className = 'ux-overlay';
+            const box = document.createElement('div');
+            box.className = 'ux-palette';
+            box.setAttribute('role', 'dialog');
+            box.setAttribute('aria-modal', 'true');
+            box.setAttribute('aria-label', 'Jump to a module or run an action');
+            box.innerHTML =
+                '<input type="search" placeholder="Jump to a module, or type an action…" aria-label="Search modules and actions" autocomplete="off" spellcheck="false">' +
+                '<ul role="listbox" aria-label="Results"></ul>' +
+                '<footer><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span><span id="uxPalCount"></span></footer>';
+            document.body.append(overlay, box);
+            const input = box.querySelector('input');
+            const list = box.querySelector('ul');
+            const all = uxCmdItems();
+            let view = all.slice(), sel = 0;
+
+            function close() {
+                overlay.remove(); box.remove();
+                if (prev && prev.focus) prev.focus();
+            }
+            function paint() {
+                const q = input.value.toLowerCase().trim();
+                view = q ? all.filter(function (it) {
+                    return it.keys.indexOf(q) > -1 || it.label.toLowerCase().indexOf(q) > -1;
+                }) : all.slice();
+                sel = Math.min(sel, Math.max(view.length - 1, 0));
+                list.innerHTML = '';
+                let last = '';
+                view.forEach(function (it, i) {
+                    if (it.grp !== last) {
+                        last = it.grp;
+                        const g = document.createElement('li');
+                        g.className = 'grp'; g.textContent = it.grp; g.setAttribute('role', 'presentation');
+                        list.appendChild(g);
+                    }
+                    const li = document.createElement('li');
+                    li.setAttribute('role', 'option');
+                    li.dataset.on = i === sel ? '1' : '0';
+                    li.innerHTML = '<span class="ico"><i class="fa-solid ' + it.icon + '"></i></span><span>' + esc(it.label) + '</span><span class="sub">' + esc(it.sub || '') + '</span>';
+                    li.addEventListener('mouseenter', function () { sel = i; paint(); });
+                    li.addEventListener('click', function () { close(); it.run(); });
+                    list.appendChild(li);
+                });
+                box.querySelector('#uxPalCount').textContent = view.length + ' item' + (view.length === 1 ? '' : 's');
+                const cur = list.querySelector('[data-on="1"]');
+                if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
+            }
+            function move(d) { sel = (sel + d + view.length) % Math.max(view.length, 1); paint(); }
+
+            input.addEventListener('input', paint);
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+                else if (e.key === 'Enter') { e.preventDefault(); const it = view[sel]; close(); if (it) it.run(); }
+                else if (e.key === 'Escape') { e.preventDefault(); close(); }
+                else if (e.key === 'Tab') { e.preventDefault(); }
+            });
+            overlay.addEventListener('click', close);
+            paint();
+            input.focus();
+        }
+
+        /* ---------- density + sidebar memory ---------- */
+        function uxDensity(next) {
+            const cur = next || (document.body.dataset.density === 'compact' ? 'comfort' : 'compact');
+            document.body.dataset.density = cur;
+            const btn = document.getElementById('densityBtn');
+            if (btn) {
+                btn.setAttribute('aria-pressed', String(cur === 'compact'));
+                btn.title = cur === 'compact' ? 'Compact tables - click for comfortable rows' : 'Comfortable tables - click to compact';
+            }
+            uxUi.write({ density: cur });
+        }
+
+        /* ---------- wiring: wrap, never replace ---------- */
+        (function uxWire() {
+            const wrap = function (name, after) {
+                const original = window[name];
+                if (typeof original !== 'function') return;
+                window[name] = function () {
+                    const out = original.apply(this, arguments);
+                    try { after.apply(this, arguments); } catch (e) { console.warn('[ux] ' + name + ' skipped:', e.message); }
+                    return out;
+                };
+            };
+
+            wrap('switchTab', function (key) {
+                const cfg = formConfigs[key] || {};
+                document.title = 'MCS ERP · ' + (cfg.shortLabel || 'Dispatch & Sales');
+
+                const pane = document.getElementById('pane-' + key);
+                document.querySelectorAll('.pane-content').forEach(function (el) {
+                    el.setAttribute('role', 'tabpanel');
+                    el.setAttribute('tabindex', '-1');
+                    el.setAttribute('aria-labelledby', 'tab-' + key);
+                    el.setAttribute('aria-hidden', el === pane ? 'false' : 'true');
+                });
+                const input = document.getElementById('tableFilter');
+                if (input) { input.value = ''; uxFilterRows(''); }
+                const sub = document.getElementById('tableSubtitle');
+                if (sub && key !== 'dispatch') {
+                    const n = (database[key] || []).length;
+                    sub.textContent = n + ' record' + (n === 1 ? '' : 's') + ' · auto-saved in this browser';
+                }
+                uxDecorate();
+            });
+
+            /* decorate synchronously after each render (the observer below is the
+               safety net for anything else that rewrites the DOM) */
+            ['renderTable', 'renderDispatchReport', 'renderStockStatement', 'renderItemMovement', 'renderUsersTable'].forEach(function (name) {
+                wrap(name, uxDecorate);
+            });
+
+            wrap('toggleSidebar', function () {
+                uxUi.write({ collapsed: document.querySelector('aside').classList.contains('sidebar-collapsed') });
+            });
+
+            wrap('renderTabBar', function () {
+                const strip = document.getElementById('tabContainer');
+                if (strip) {
+                    if (!window.__uxPlus) {
+                        const plus = document.createElement('button');
+                        plus.id = 'uxNewTab'; plus.type = 'button';
+                        plus.title = 'Open a module or run an action (Ctrl+K)';
+                        plus.setAttribute('aria-label', 'Open a module or run an action');
+                        plus.innerHTML = '<i class="fa-solid fa-plus"></i>';
+                        plus.addEventListener('click', uxPalette);
+                        window.__uxPlus = plus;
+                    }
+                    strip.appendChild(window.__uxPlus);   // renderTabBar wipes innerHTML each time
+                }
+                document.querySelectorAll('#tabContainer [role="tab"]').forEach(function (t) {
+                    const oc = t.getAttribute('onclick') || '';
+                    const k = (oc.match(/'([^']+)'/) || [])[1];
+                    if (!k) return;
+                    t.id = 'tab-' + k;
+                    t.setAttribute('aria-controls', 'pane-' + k);
+                });
+            });
+
+            wrap('handleFormSubmit', function (type, formElement) {
+                const rows = document.getElementById('tableBody');
+                if (rows && rows.rows.length) uxFlashRow({ bdlNo: (formElement.querySelector('[name=bdlNo]') || {}).value, customerName: (formElement.querySelector('[name=customerName]') || {}).value, itemDesc: (formElement.querySelector('[name=itemDesc]') || {}).value, truckNo: (formElement.querySelector('[name=truckNo]') || {}).value });
+            });
+        })();
+
+        /* ---------- boot: preferences, keys, print letterhead ---------- */
+        document.addEventListener('DOMContentLoaded', function () {
+            const ui = uxUi.read();
+            if (ui.density) uxDensity(ui.density);
+            if (ui.collapsed) {
+                document.querySelector('aside').classList.add('sidebar-collapsed');
+                document.getElementById('sidebarToggleIcon').className = 'fa-solid fa-right-to-bracket text-sky-400';
+                document.getElementById('sidebarToggleLabel').innerText = 'Expand Menu';
+            }
+
+            const foot = document.createElement('div');
+            foot.className = 'ux-side-foot';
+            foot.innerHTML = '<span class="dot" aria-hidden="true"></span><span>Ready</span>';
+            document.querySelector('aside').appendChild(foot);
+
+            const pb = document.getElementById('paletteBtn');
+            if (pb) pb.addEventListener('click', uxPalette);
+            const db = document.getElementById('densityBtn');
+            if (db) db.addEventListener('click', function () { uxDensity(); });
+
+            const filter = document.getElementById('tableFilter');
+            if (filter) {
+                filter.addEventListener('input', function () { uxFilterRows(this.value); });
+                filter.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') { this.value = ''; uxFilterRows(''); }
+                });
+            }
+
+            const strip = document.getElementById('tabContainer');
+            if (strip) {
+                strip.addEventListener('auxclick', function (e) {
+                    if (e.button !== 1) return;
+                    const t = e.target.closest('[role="tab"]');
+                    const oc = t && (t.getAttribute('onclick') || '');
+                    const key = (oc.match(/'([^']+)'/) || [])[1];
+                    if (!key) return;
+                    e.preventDefault();
+                    closeTab(key, e);
+                });
+            }
+
+            const av = document.createElement('span');
+            av.id = 'uxAvatar';
+            av.setAttribute('aria-hidden', 'true');
+            const nameBox = document.querySelector('.header-user > div');
+            if (nameBox && nameBox.parentElement) nameBox.parentElement.insertBefore(av, nameBox);
+            const setAvatar = function () {
+                const parts = String(currentUser.name || 'user').trim().split(/\s+/);
+                av.textContent = ((parts[0] || 'U')[0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+            };
+            setAvatar();
+            document.querySelector('.header-user button').addEventListener('click', function () { setTimeout(setAvatar, 500); });
+
+            window.addEventListener('beforeprint', function () {
+                const entryTab = ['dispatch', 'inward', 'transfer', 'customer', 'item'].indexOf(activeTabKey) > -1;
+                document.body.classList.toggle('ux-print-entries', entryTab);
+                const cfg = formConfigs[activeTabKey] || {};
+                document.getElementById('printTitle').textContent = (cfg.shortLabel || 'Report') + ' \u2014 Dispatch & Sales Summary';
+                const rows = document.querySelectorAll('main table tbody tr:not([hidden])').length;
+                document.getElementById('printMeta').textContent = new Date().toLocaleString()
+                    + ' \u00b7 ' + (currentUser.name || '-') + ' (' + (currentUser.role || '-') + ')'
+                    + ' \u00b7 ' + rows + ' rows';
+            });
+            window.addEventListener('afterprint', function () {
+                document.body.classList.remove('ux-print-entries');
+            });
+
+            uxDecorate();
+            uxCounts();
+
+            if (window.MutationObserver) {
+                new MutationObserver(uxSchedule).observe(document.querySelector('main'), { childList: true, subtree: true });
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName || '');
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); uxPalette(); return; }
+            if (e.key === '/' && !typing) {
+                const card = document.getElementById('previewCard');
+                const f = document.getElementById('tableFilter');
+                if (f && card && !card.classList.contains('hidden')) { e.preventDefault(); f.focus(); f.select(); }
+            }
         });
     </script>
 </body>
