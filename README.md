@@ -39,6 +39,21 @@ runtime* (`'bg-' + x`) would be missed and must go into `safelist` in
 SheetJS (861 KB) is not loaded on page open — it is injected the first time
 **Export to Excel** is clicked, by `uxEnsureXlsx()`.
 
+## Handing it to someone as one file
+
+`python3 vendor/build-standalone.py [outdir]` derives `MCS-ERP-standalone.html`
+from `index.html`: the three vendored stylesheets get inlined and every webfont
+becomes a data URI, so a single file can be emailed or dropped on a Desktop and
+double-clicked - no folder, no server, no internet. It refuses to write if any
+`src`/`href`/`url()` would still point outside the file, so the output cannot
+silently regress into something that needs `vendor/`.
+
+`index.html` stays the source of truth (edit that, then rebuild). Excel export is
+the one thing not inlined - SheetJS is 880 KB and the app deliberately loads it on
+demand - so the standalone tells the user to use Export CSV, which needs no
+library. The zip used for handouts is built the same way: `index.html` + `vendor/`
++ the standalone file + a short instructions text file.
+
 ## "A button appears but does nothing" — how to tell what broke
 
 Everything lives in one file, so a single script error can unwire half the page in

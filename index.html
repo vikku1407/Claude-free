@@ -9510,7 +9510,7 @@
             if (typeof exportExcel === 'function') {
                 window.exportStyledExcelReport = function () {
                     uxEnsureXlsx(function (ready) {
-                        if (!ready) { showToast('vendor/xlsx.full.min.js is missing - use Export CSV.', 'error'); return; }
+                        if (!ready) { showToast('Excel needs the vendor/ folder - Export CSV works on its own.', 'error'); return; }
                         exportExcel();
                     });
                 };
