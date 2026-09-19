@@ -596,6 +596,7 @@
             margin-top: auto; padding: .65rem .75rem; border-top: 1px solid rgba(148, 163, 184, .16);
             display: flex; align-items: center; gap: .45rem; font-size: .6875rem; color: #94a3b8;
         }
+        aside .ux-build { margin-left: auto; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .625rem; color: #64748b; opacity: .8; }
         aside .ux-side-foot .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ux-ok); box-shadow: 0 0 0 3px rgba(5, 150, 105, .18); }
 
         /* ---- tab strip ---- */
@@ -778,6 +779,16 @@
         @media (max-width: 768px) {
             body.sidebar-open { overflow: hidden; }
         }
+
+        .ux-beacon {
+            position: fixed; left: 50%; bottom: 1rem; transform: translate(-50%, 140%); z-index: 200;
+            display: flex; align-items: center; gap: .75rem; max-width: min(92vw, 46rem);
+            padding: .6rem .7rem .6rem 1rem; border-radius: 12px; background: #7f1d1d; color: #fff;
+            font-size: .8125rem; box-shadow: var(--ux-shadow-2); transition: transform .25s cubic-bezier(.16, 1, .3, 1);
+        }
+        .ux-beacon.is-on { transform: translate(-50%, 0); }
+        .ux-beacon button { border: 1px solid rgba(255,255,255,.45); border-radius: 99px; padding: .2rem .6rem; font-size: .75rem; font-weight: 700; background: rgba(255,255,255,.14); }
+        .ux-beacon i { font-style: normal; opacity: .9; }
 
         /* ---- print: this screen's real deliverable ---- */
         #printHead { display: none; }
@@ -8732,7 +8743,21 @@
                 timeStyle: 'short' 
             });
         }
+    </script>
 
+    <!-- ==============================================================
+         UX layers live in their own script on purpose: if the app
+         script above throws partway, this one still installs, so
+         the palette, density, undo and diagnostics keep working.
+         ============================================================== -->
+    <script>
+        /* Installed before the UX layer so an error thrown by the app script above is still
+           captured - without this, a crash shows up only as "some buttons do nothing". */
+        window.addEventListener('error', function (e) {
+            if (e && e.message && (!e.target || e.target === window)) window.__uxPendingError = e.message + (e.lineno ? ' (line ' + e.lineno + ')' : '');
+        }, true);
+    </script>
+    <script id="ux-layers">
         /* ==================================================================
            UI/UX patch layer - auto-save, label wiring, keyboard tabs,
            dispatch scope toggle, CDN tripwire.
@@ -8756,6 +8781,7 @@
         }
 
         function erpLoad() {
+            window.__uxLoaded = true;
             let raw = null;
             try { raw = localStorage.getItem(STORAGE_KEY); } catch (err) { return; }
             if (!raw) { erpSave(); return; }
@@ -8938,6 +8964,15 @@
            everything else is wrapped instead of edited.
            ================================================================== */
 
+        // Self-contained: never depend on bindings declared in the app's own script.
+        function uxEsc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        function uxReady() {
+            try { return typeof database === 'object' && !!formConfigs; } catch (e) { return false; }
+        }
+
+        const UX_BUILD = 'ux2.1 (2026-09-19)';
         const UI_KEY = 'mcs-erp-ui';
         const uxUi = {
             read() { try { return JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } },
@@ -8960,10 +8995,10 @@
                 box.setAttribute('aria-labelledby', 'uxDlgTitle');
                 const tone = opts.danger ? '#e11d48' : '#0284c7';
                 box.innerHTML =
-                    '<h2 id="uxDlgTitle"><i class="fa-solid ' + (opts.icon || 'fa-circle-question') + '" style="color:' + tone + '"></i> ' + esc(opts.title) + '</h2>' +
-                    '<p>' + esc(opts.body || '') + '</p>' +
+                    '<h2 id="uxDlgTitle"><i class="fa-solid ' + (opts.icon || 'fa-circle-question') + '" style="color:' + tone + '"></i> ' + uxEsc(opts.title) + '</h2>' +
+                    '<p>' + uxEsc(opts.body || '') + '</p>' +
                     '<div class="row"><button type="button" class="cancel">Cancel</button>' +
-                    '<button type="button" class="danger">' + esc(opts.ok || 'Confirm') + '</button></div>';
+                    '<button type="button" class="danger">' + uxEsc(opts.ok || 'Confirm') + '</button></div>';
                 document.body.append(overlay, box);
 
                 const cancel = box.querySelector('.cancel');
@@ -8993,6 +9028,7 @@
 
         /* ---------- destructive actions, re-declared with confirm + undo ---------- */
         function deleteEntry(type, indexInArray) {
+            if (!uxReady()) { return; }
             if (currentUser.role !== 'ADMIN') {
                 showToast('🚫 Authority Denied! Only Admin User can delete entries.', 'error');
                 return;
@@ -9357,7 +9393,7 @@
                     const li = document.createElement('li');
                     li.setAttribute('role', 'option');
                     li.dataset.on = i === sel ? '1' : '0';
-                    li.innerHTML = '<span class="ico"><i class="fa-solid ' + it.icon + '"></i></span><span>' + esc(it.label) + '</span><span class="sub">' + esc(it.sub || '') + '</span>';
+                    li.innerHTML = '<span class="ico"><i class="fa-solid ' + it.icon + '"></i></span><span>' + uxEsc(it.label) + '</span><span class="sub">' + uxEsc(it.sub || '') + '</span>';
                     li.addEventListener('mouseenter', function () { sel = i; paint(); });
                     li.addEventListener('click', function () { close(); it.run(); });
                     list.appendChild(li);
@@ -9476,35 +9512,57 @@
         })();
 
         /* ---------- boot: preferences, keys, print letterhead ---------- */
+        /* Each step on its own: one failing lookup must never take the palette,
+           the density button or the print letterhead down with it. */
+        function uxStep(name, fn) {
+            try { fn(); }
+            catch (err) { console.warn('[ux] "' + name + '" skipped:', err.message); }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
-            const ui = uxUi.read();
-            if (ui.density) uxDensity(ui.density);
-            if (ui.collapsed) {
-                document.querySelector('aside').classList.add('sidebar-collapsed');
-                document.getElementById('sidebarToggleIcon').className = 'fa-solid fa-right-to-bracket text-sky-400';
-                document.getElementById('sidebarToggleLabel').innerText = 'Expand Menu';
-            }
+            /* If the app's own DOMContentLoaded never ran (it threw partway), saved rows
+               would silently not come back. Load them here if that happened. */
+            uxStep('state restore', function () {
+                if (!window.__uxLoaded && uxReady()) erpLoad();
+            });
 
-            const foot = document.createElement('div');
-            foot.className = 'ux-side-foot';
-            foot.innerHTML = '<span class="dot" aria-hidden="true"></span><span>Ready</span>';
-            document.querySelector('aside').appendChild(foot);
+            uxStep('preferences', function () {
+                const ui = uxUi.read();
+                if (ui.density) uxDensity(ui.density);
+                if (ui.collapsed) {
+                    const side = document.querySelector('aside');
+                    if (side) {
+                        side.classList.add('sidebar-collapsed');
+                        const ic = document.getElementById('sidebarToggleIcon');
+                        const lb = document.getElementById('sidebarToggleLabel');
+                        if (ic) ic.className = 'fa-solid fa-right-to-bracket text-sky-400';
+                        if (lb) lb.innerText = 'Expand Menu';
+                    }
+                }
+            });
 
-            const pb = document.getElementById('paletteBtn');
-            if (pb) pb.addEventListener('click', uxPalette);
-            const db = document.getElementById('densityBtn');
-            if (db) db.addEventListener('click', function () { uxDensity(); });
+            uxStep('storage footer', function () {
+                const side = document.querySelector('aside');
+                if (!side) return;
+                const foot = document.createElement('div');
+                foot.className = 'ux-side-foot';
+                foot.innerHTML = '<span class="dot" aria-hidden="true"></span><span>Ready</span>' +
+                    '<span class="ux-build">' + UX_BUILD + '</span>';
+                side.appendChild(foot);
+            });
 
-            const filter = document.getElementById('tableFilter');
-            if (filter) {
+            uxStep('row filter', function () {
+                const filter = document.getElementById('tableFilter');
+                if (!filter) return;
                 filter.addEventListener('input', function () { uxFilterRows(this.value); });
                 filter.addEventListener('keydown', function (e) {
                     if (e.key === 'Escape') { this.value = ''; uxFilterRows(''); }
                 });
-            }
+            });
 
-            const strip = document.getElementById('tabContainer');
-            if (strip) {
+            uxStep('tab strip', function () {
+                const strip = document.getElementById('tabContainer');
+                if (!strip) return;
                 strip.addEventListener('auxclick', function (e) {
                     if (e.button !== 1) return;
                     const t = e.target.closest('[role="tab"]');
@@ -9514,19 +9572,24 @@
                     e.preventDefault();
                     closeTab(key, e);
                 });
-            }
+            });
 
-            const av = document.createElement('span');
-            av.id = 'uxAvatar';
-            av.setAttribute('aria-hidden', 'true');
-            const nameBox = document.querySelector('.header-user > div');
-            if (nameBox && nameBox.parentElement) nameBox.parentElement.insertBefore(av, nameBox);
-            const setAvatar = function () {
-                const parts = String(currentUser.name || 'user').trim().split(/\s+/);
-                av.textContent = ((parts[0] || 'U')[0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
-            };
-            setAvatar();
-            document.querySelector('.header-user button').addEventListener('click', function () { setTimeout(setAvatar, 500); });
+            uxStep('avatar', function () {
+                const nameBox = document.querySelector('.header-user > div');
+                if (!nameBox || !nameBox.parentElement) return;
+                const av = document.createElement('span');
+                av.id = 'uxAvatar';
+                av.setAttribute('aria-hidden', 'true');
+                nameBox.parentElement.insertBefore(av, nameBox);
+                const setAvatar = function () {
+                    const parts = String(currentUser.name || 'user').trim().split(/\s+/);
+                    av.textContent = ((parts[0] || 'U')[0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+                };
+                setAvatar();
+                const switchBtn = document.querySelector('.header-user button');
+                if (switchBtn) switchBtn.addEventListener('click', function () { setTimeout(setAvatar, 500); });
+                window.__uxSetAvatar = setAvatar;
+            });
 
             window.addEventListener('beforeprint', function () {
                 const entryTab = ['dispatch', 'inward', 'transfer', 'customer', 'item'].indexOf(activeTabKey) > -1;
@@ -9542,8 +9605,16 @@
                 document.body.classList.remove('ux-print-entries');
             });
 
-            uxDecorate();
-            uxCounts();
+            uxStep('decorate', function () { uxDecorate(); uxCounts(); });
+
+            /* delegated instead of element-bound, so #paletteBtn / #densityBtn / the tab
+               strip's "+" respond even if they are re-created or added after this point */
+            document.addEventListener('click', function (e) {
+                const hit = e.target.closest && e.target.closest('#paletteBtn, #densityBtn, #uxNewTab');
+                if (!hit) return;
+                if (hit.id === 'densityBtn') { uxDensity(); return; }
+                uxPalette();
+            });
 
             if (window.MutationObserver) {
                 new MutationObserver(uxSchedule).observe(document.querySelector('main'), { childList: true, subtree: true });
@@ -9559,6 +9630,43 @@
                 if (f && card && !card.classList.contains('hidden')) { e.preventDefault(); f.focus(); f.select(); }
             }
         });
+
+        /* A single-file app gets edited by hand, and a syntax/runtime slip normally shows up
+           as "some buttons quietly stopped working". Say it out loud instead. */
+        (function uxErrorBeacon() {
+            let shown = 0;
+            function flash(msg) {
+                let bar = document.getElementById('uxErrBeacon');
+                if (!bar) {
+                    bar = document.createElement('div');
+                    bar.id = 'uxErrBeacon';
+                    bar.className = 'ux-beacon';
+                    bar.innerHTML = '<span><b>App script error</b> <i></i></span>' +
+                        '<button type="button">Dismiss</button>';
+                    bar.querySelector('button').addEventListener('click', function () { bar.remove(); });
+                    document.body.appendChild(bar);
+                }
+                bar.querySelector('i').textContent = msg;
+                bar.classList.add('is-on');
+            }
+            window.addEventListener('error', function (e) {
+                if (shown >= 3 || !e || !e.message) return;      // resources are not app errors
+                if (!e.target || e.target === window || e.target.tagName === undefined) {
+                    shown++;
+                    flash(e.message + (e.lineno ? ' (line ' + e.lineno + ')' : ''));
+                }
+            });
+            window.addEventListener('unhandledrejection', function (e) {
+                const r = e && e.reason;
+                if (shown < 3 && r) { shown++; flash('Promise: ' + (r.message || r)); }
+            });
+            /* the app's own boot runs before this script can wrap it, so an error thrown in
+               a browser reaches window.onerror; keep a manual entry point too */
+            if (window.__uxPendingError) flash(window.__uxPendingError);
+            window.uxFlashError = function (msg) { shown++; flash(msg); };
+            document.documentElement.dataset.uxBuild = UX_BUILD;
+            console.info('[ux] ' + UX_BUILD + ' loaded (palette: Ctrl+K, filter: /, undo: toast)');
+        })();
     </script>
 </body>
 </html>
