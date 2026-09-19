@@ -146,11 +146,21 @@ def main():
     shutil.copy2(standalone, stage)
     shutil.copy2(howto, stage)
     archive = os.path.join(OUTDIR, 'MCS-ERP.zip')
+    # Deterministic on purpose: a stored mtime would give the same app a different
+    # sha256 on every rebuild, which makes the checksum on the download page useless.
+    members = []
+    for base, dirs, files in os.walk(stage):
+        dirs.sort()
+        for f in sorted(files):
+            full = os.path.join(base, f)
+            members.append((os.path.relpath(full, os.path.dirname(stage)).replace(os.sep, '/'), full))
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-        for base, _dirs, files in os.walk(stage):
-            for f in sorted(files):
-                full = os.path.join(base, f)
-                z.write(full, os.path.relpath(full, os.path.dirname(stage)))
+        for name, full in sorted(members):
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            with open(full, 'rb') as fh:
+                z.writestr(info, fh.read())
     shutil.rmtree(os.path.dirname(stage), ignore_errors=True)
 
     # download page
