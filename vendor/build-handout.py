@@ -269,7 +269,7 @@ def main():
             'Repo ka poora snapshot: index.html + vendor/ (Excel export ke saath) + tests. '
             'Yeh zip GitHub khud banata hai, isliye download hamesha chalega.',
             None, 'repo archive', [('pri', 'Download ↓', gh), ('copy', 'Copy link', gh)],
-            note='Is address ko naye tab me paste karo (branch ka latest commit):'))
+            note='Ye link Arena ke panel se bahar bhi chalta hai (public repo, koi token nahi):'))
     for name, label, desc, hot in CARDS:
         raw = open(os.path.join(OUTDIR, name), 'rb').read()
         url = (pub + '/' + name) if pub else '/' + name
@@ -278,8 +278,10 @@ def main():
                           [('pri', 'Download ↓', url)] + ([('copy', 'Copy link', url)] if pub else []),
                           hot=hot))
 
-    sub = ('Panel me click par kuch na ho to ye normal hai - preview ek sandboxed iframe hai aur browser '
-           'wahan se download block kar deta hai. Neeche har card me <b>Copy link</b> hai: copy karke naye tab me paste karo.') if pub else \
+    sub = ('Do alag baatein, dono is panel ki limit hain: (1) panel ke andar browser download start '
+           'hone hi nahi deta, (2) ye host Arena ke bahar <code>traffic access token</code> maangta hai. '
+           'Isliye <b>file chahiye to GitHub archive wala card</b> use karo - wo link kahin bhi chalta hai. '
+           'Sirf test karna hai to niche wala card: app yahin panel me khul jaayega.') if pub else \
           'Dono files same app hain; kisi bhi ek par click = download.'
     # tokens, not str.format: the page carries a <script> and CSS full of braces
     page = PAGE.replace('@@STAMP@@', stamp).replace('@@SUB@@', sub).replace('@@CARDS@@', '\n'.join(cards))
