@@ -6,37 +6,14 @@
     <meta name="color-scheme" content="light">
     <meta name="theme-color" content="#0f172a">
     <title>Dispatch & Sales Summary Report ERP - MCS</title>
-    <!-- Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0f7ff',
-                            100: '#e0effe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            700: '#0f172a',
-                            800: '#1e293b',
-                            900: '#0f172a',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- The CSS below has requested "Inter" since the first commit, but the font was never
-         loaded, so every machine rendered a different fallback. Loaded explicitly now. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500&display=swap">
-    <!-- SheetJS: was used by exportStyledExcelReport() but never included (ReferenceError). Loaded deferred. -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
-    <!-- SheetJS for Exporting Styled Excel Files -->
+    <!-- Fonts, Tailwind and SheetJS are vendored under vendor/ (see vendor/README.md).
+         No CDN, no build step, works offline and on locked-down office networks.
+         Tailwind is pre-compiled from this very file: sh vendor/build.sh ---->
+    <link rel="stylesheet" href="vendor/tailwind.css">
+    <link rel="stylesheet" href="vendor/fonts/fonts.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <!-- SheetJS is ~880 KB, so it is injected on the first Export-to-Excel click instead of
+         on every page load. uxEnsureXlsx() in the app script does that. -->
     <style>
         :root {
             --primary: #0284c7;
@@ -790,6 +767,18 @@
         .ux-dialog .cancel { border: 1px solid var(--ux-line); border-radius: var(--ux-r-sm); padding: .5rem .9rem; font-weight: 600; color: var(--ux-ink-2); }
         .ux-dialog .cancel:hover { background: var(--ux-surface-2); }
 
+        /* three class hooks the markup already used but that nothing ever styled */
+        .custom-scrollbar { scrollbar-width: thin; }
+        .custom-scrollbar::-webkit-scrollbar { height: 7px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, .45); border: 2px solid transparent; background-clip: content-box; }
+        select.item-select { padding-left: 1.4rem; background-position: calc(100% - .6rem) center, right .6rem center; box-shadow: inset 3px 0 0 rgba(2, 132, 199, .35); }
+        .pane-content select.item-select { box-shadow: inset 3px 0 0 rgba(2, 132, 199, .35), inset 0 1px 1px rgba(15, 23, 42, .04); }
+        /* the mobile drawer left the page scrolling behind it; body.sidebar-open was
+           already toggled by the app, so wire it up instead of adding another class */
+        @media (max-width: 768px) {
+            body.sidebar-open { overflow: hidden; }
+        }
+
         /* ---- print: this screen's real deliverable ---- */
         #printHead { display: none; }
         @media print {
@@ -1059,7 +1048,7 @@
                                     </div>
                                 </div>
                                 <div class="kpi-card p-4 rounded-xl border border-slate-200 flex items-center space-x-4" style="--kpi-accent: #d97706; --kpi-soft: #fef3c7;">
-                                    <div class="kpi-icon w-10 h-12 rounded-lg flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-truck-dispatch"></i></div>
+                                    <div class="kpi-icon w-10 h-12 rounded-lg flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-truck-fast"></i></div>
                                     <div>
                                         <div id="kpiTodayDispatches" class="text-lg font-black text-slate-800">0</div>
                                         <div class="text-xs text-slate-500 font-medium">Today's Dispatch Entries</div>
@@ -8150,7 +8139,7 @@
                         class="cursor-pointer group flex items-center space-x-2 px-3 py-1.5 border-t-2 text-xs font-semibold rounded-t-lg transition-all ${
                             isActive 
                             ? 'bg-white border-sky-600 text-slate-800 shadow-sm' 
-                            : 'bg-slate-300 border-transparent text-slate-600 hover:bg-slate-250'
+                            : 'bg-slate-300 border-transparent text-slate-600 hover:bg-slate-100'
                         }">
                         <i class="fa-solid ${config.icon} text-[10px] ${isActive ? 'text-sky-600' : 'text-slate-500'}"></i>
                         <span class="whitespace-nowrap">${config.shortLabel}</span>
@@ -8884,9 +8873,9 @@
             const warn = document.createElement('div');
             warn.id = 'cdnWarning';
             warn.className = 'is-on';
-            warn.innerHTML = '<b>Tailwind/FontAwesome CDN blocked by this network.</b> ' +
-                'Layout and icons will look broken, but your saved entries are untouched. ' +
-                'Fix: download Tailwind + Font Awesome next to index.html and point the two <code>&lt;link&gt;/&lt;script&gt;</code> tags at the local files.';
+            warn.innerHTML = '<b>vendor/tailwind.css did not load.</b> The stylesheet is missing or index.html was ' +
+                'copied out of its folder on its own - layout will look broken, but your saved entries are untouched. ' +
+                'Fix: keep the vendor/ folder next to index.html, or run <code>sh vendor/build.sh</code> to regenerate it.';
             document.body.appendChild(warn);
         }
 
@@ -9108,6 +9097,19 @@
                     erpSave();
                     showToast('User removed.', 'info');
                 });
+        }
+
+        /* SheetJS is only needed the moment someone exports, and it is 880 KB -
+           load it on demand so opening the app stays instant. */
+        function uxEnsureXlsx(done) {
+            if (typeof XLSX !== 'undefined') { done(true); return; }
+            if (window.__uxXlsxLoading) { window.__uxXlsxLoading.push(done); return; }
+            window.__uxXlsxLoading = [done];
+            const tag = document.createElement('script');
+            tag.src = 'vendor/xlsx.full.min.js';
+            tag.onload = function () { const q = window.__uxXlsxLoading; window.__uxXlsxLoading = null; q.forEach(f => f(true)); };
+            tag.onerror = function () { const q = window.__uxXlsxLoading; window.__uxXlsxLoading = null; q.forEach(f => f(false)); };
+            document.head.appendChild(tag);
         }
 
         function uxFlashRow(row) {
@@ -9429,6 +9431,16 @@
             ['renderTable', 'renderDispatchReport', 'renderStockStatement', 'renderItemMovement', 'renderUsersTable'].forEach(function (name) {
                 wrap(name, uxDecorate);
             });
+
+            const exportExcel = window.exportStyledExcelReport;
+            if (typeof exportExcel === 'function') {
+                window.exportStyledExcelReport = function () {
+                    uxEnsureXlsx(function (ready) {
+                        if (!ready) { showToast('vendor/xlsx.full.min.js is missing - use Export CSV.', 'error'); return; }
+                        exportExcel();
+                    });
+                };
+            }
 
             wrap('toggleSidebar', function () {
                 uxUi.write({ collapsed: document.querySelector('aside').classList.contains('sidebar-collapsed') });
