@@ -39,6 +39,36 @@ runtime* (`'bg-' + x`) would be missed and must go into `safelist` in
 SheetJS (861 KB) is not loaded on page open — it is injected the first time
 **Export to Excel** is clicked, by `uxEnsureXlsx()`.
 
+## "A button appears but does nothing" — how to tell what broke
+
+Everything lives in one file, so a single script error can unwire half the page in
+silence. Two things make that visible, both added for that reason:
+
+* the sidebar footer prints a build stamp (`ux2.2 (2026-09-19)`) — no stamp, or an
+  older one, means the browser is showing a cached copy: hard-reload (Ctrl+Shift+R)
+* if the app's own script throws, a red bar slides up from the bottom of the screen
+  naming the error and its line number — that line is the whole diagnosis. The
+  console also logs `[ux] …` on load, which proves the UX layer installed.
+
+Two bugs of this class were found and fixed that way, both invisible to a naive test:
+
+1. the UX layer used to be wired at the end of the app's 9.5k-line script, so any
+   earlier throw silently unwired every button → the layer now lives in its own
+   `<script id="ux-layers">` after the app, is wired by event delegation, and runs
+   each boot step in its own `try/catch`
+2. the command palette rebuilt its row list on `mouseenter`, so the node the mouse
+   went down on no longer existed at mouseup and the browser aimed the `click` at
+   the `<ul>` instead of the row → clicking a module did nothing while Ctrl+K +
+   Enter worked. Rows are now indexed (`data-i`) with one delegated handler on the
+   list, and hover only moves the highlight (a CSS `:hover` does the look) instead
+   of re-rendering.
+
+Worth remembering when editing this file: dispatching `click()` on an element in
+jsdom bypasses hit testing, so it cannot catch a "rebuilt under the cursor" bug.
+The palette test drives mouseover → mousedown → mouseup → click on a captured node
+reference, asserts that node is still in the DOM, and runs the same sequence against
+a mutant built by reverting the fix — so the check is known to have teeth.
+
 ## Notes for whoever maintains this
 
 - `index.html` is ~8.6k lines: markup, the `<style>` block, and all app logic in one file. Edit in place; the UI/UX polish layer at the end of the `<style>` block is separated and commented so it can be deleted wholesale.
