@@ -195,6 +195,8 @@ def card(title, label, desc, size, digest, hrefs, hot=False, note=''):
             acts.append('<button data-copy="%s">%s</button>' % (url, text))
         elif kind == 'pri':
             acts.append('<a class="pri" href="%s" target="_blank" rel="noopener" download>%s</a>' % (url, text))
+        elif kind == 'here':
+            acts.append('<a href="%s">%s</a>' % (url, text))
         else:
             acts.append('<a href="%s" target="_blank" rel="noopener">%s</a>' % (url, text))
     urlbox = ''.join('<div class="url">%s<br><code>%s</code></div>' % (note or 'Panel ke andar click block ho to ye address naye tab me paste karo:', u)
@@ -260,7 +262,7 @@ def main():
             'Panel me hi test karo', 'Download karne ki zaroorat nahi',
             'Ye wahin file hai, bas yahan inline khul jaati hai - Jump/palette, density, filter, print sab '
             'yahi check ho jaayega. Data isi browser me rehta hai.',
-            None, 'live preview', [('tab', 'App kholo ↓', pub + '/MCS-ERP-standalone.html?inline=1')], hot=True,
+            None, 'live preview', [('here', 'App yahi kholo ↓', pub + '/MCS-ERP-standalone.html?inline=1')], hot=True,
             note='Same URL, download ke bina (server isme Content-Disposition nahi bhejta):'))
     gh = repo_zip_url()
     if gh:

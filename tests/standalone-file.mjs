@@ -14,6 +14,15 @@ if (!fs.existsSync(file)) { console.log('FAIL the builder wrote no ' + file); pr
 const html = fs.readFileSync(file, 'utf8');
 const s = suite();
 
+/* the copy committed under handout/ must not rot into something stale */
+const committed = path.join(ROOT, 'handout', 'MCS-ERP-standalone.html');
+if (fs.existsSync(committed)) {
+  const crypto = await import('crypto');
+  const h = (b) => crypto.createHash('sha256').update(b).digest('hex').slice(0, 12);
+  s.ok(h(fs.readFileSync(committed)) === h(Buffer.from(html, 'utf8')),
+       'handout/MCS-ERP-standalone.html matches a fresh build: ' + h(Buffer.from(html, 'utf8')));
+}
+
 s.ok(!/<link[^>]+vendor/.test(html), 'no <link> points at the missing vendor/ folder');
 s.ok(!/<script[^>]+src=/.test(html), 'no <script src> at all (everything is inline)');
 s.ok((html.match(/url\(data:font\/woff2;base64,/g) || []).length >= 15,
