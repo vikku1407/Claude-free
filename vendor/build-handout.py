@@ -92,6 +92,8 @@ PAGE = """<!doctype html>
   .foot {{ display:flex; align-items:center; justify-content:space-between; font-size:.75rem; color:var(--mut);
           border-top:1px dashed var(--line); padding-top:.55rem; font-family:ui-monospace,monospace; }}
   .go {{ color:var(--brand); font-weight:700; }}
+  .url {{ margin-top:.5rem; font-size:.72rem; color:var(--mut); word-break:break-all; }}
+  .url code {{ background:#f1f5f9; border:1px solid var(--line); border-radius:5px; padding:.1rem .3rem; color:#334155; user-select:all; }}
   .note {{ background:#fffbeb; border:1px solid #fde68a; border-radius:12px; padding:.75rem .9rem; font-size:.83rem; color:#78350f; }}
   ol {{ margin:.4rem 0 0; padding-left:1.1rem; }}
   li {{ margin:.2rem 0; }}
@@ -164,16 +166,23 @@ def main():
     shutil.rmtree(os.path.dirname(stage), ignore_errors=True)
 
     # download page
+    # The preview panel is a sandboxed iframe, and a sandboxed iframe simply is not
+    # allowed to start a download (Chrome drops it, nothing appears to happen). So the
+    # page also prints the absolute URL as selectable text - paste it in a real tab.
+    pub = os.environ.get('PUBLIC_BASE', '').rstrip('/')
     cards = []
     for name, (label, desc) in CARDS.items():
+        urlline = ('<div class="url">panel me click dabane par kuch na ho to ye address '
+                   'naye tab me paste karo:<br><code>%s/%s</code></div>' % (pub, name)) if pub else ''
         path = os.path.join(OUTDIR, name)
         raw = open(path, 'rb').read()
         cards.append(
-            '    <a class="card" href="/%s" download>\n'
+            '    <a class="card" href="%s/%s" target="_blank" rel="noopener" download>\n'
             '      <div class="top"><span class="name">%s</span><span class="size">%.2f MB</span></div>\n'
             '      <div class="label">%s</div>\n      <p>%s</p>\n'
             '      <div class="foot"><span>sha256 %s</span><span class="go">Download &#8595;</span></div>\n'
-            '    </a>' % (name, name, len(raw) / 1048576.0, label, desc, hashlib.sha256(raw).hexdigest()[:12]))
+            '      %s\n    </a>' % (pub, name, name, len(raw) / 1048576.0, label, desc,
+                                     hashlib.sha256(raw).hexdigest()[:12], urlline))
     with open(os.path.join(OUTDIR, 'index.html'), 'w', encoding='utf-8') as fh:
         fh.write(PAGE.format(stamp=stamp, cards='\n'.join(cards)))
 
