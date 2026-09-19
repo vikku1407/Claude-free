@@ -36,10 +36,34 @@ def data_uri(path):
     return 'url(data:%s;base64,%s)' % (mime, base64.b64encode(raw).decode('ascii'))
 
 
-def inline_css(rel):
-    """Read a stylesheet and rewrite its url(...) so nothing points outside."""
+def font_faces(css, seen, needed=None):
+    """Drop @font-face blocks that are duplicates, or that the app never selects.
+
+    all.min.css alone declares ten faces (FA6 solid/regular/brands, the FA5 aliases and
+    the v4-compat ones). Only the ones a font-family in use can actually resolve to are
+    worth 200 KB of base64 each, so everything else goes - that is roughly half the
+    size of the old single-file build.
+    """
+    kept, dropped = [], 0
+    for block in re.findall(r'@font-face\s*\{[^}]*\}', css):
+        fam = re.search(r'font-family:\s*([\'"]?)([^\'";]+)\1', block)
+        wt = re.search(r'font-weight:\s*([0-9]+|normal|bold)', block)
+        key = ((fam.group(2) if fam else '?').strip(), (wt.group(1) if wt else 'normal'))
+        if key in seen or (needed is not None and key not in needed):
+            dropped += 1
+            css = css.replace(block, '', 1)
+            continue
+        seen.add(key)
+        kept.append(key)
+    return css, kept, dropped
+
+
+def inline_css(rel, seen=None, needed=None):
     path = os.path.join(ROOT, rel)
     css = open(path, encoding='utf-8').read()
+    dropped = 0
+    if seen is not None:
+        css, _, dropped = font_faces(css, seen, needed)
     base = os.path.dirname(path)
     state = {'n': 0}
 
@@ -61,7 +85,7 @@ def inline_css(rel):
     css = re.sub(r'src:\s*([^;}]+)', lambda m: 'src:' + fix_src(m.group(1)), css)
     # leftovers only - a data: uri we just made must survive this pass
     css = re.sub(r'url\(\s*[\'"]?(?!data:)[^)\'"]*[\'"]?\s*\)', '', css)
-    return css, state['n']
+    return css, state['n'], dropped
 
 
 def build():
@@ -78,10 +102,21 @@ def build():
     # 1. swap the three <link> tags for one inlined <style>
     links = ''.join('    <link rel="stylesheet" href="%s">\n' % l for l in LINKS)
     assert links in head, 'the <link> block in index.html changed - update this builder'
-    blocks, total = [], 0
+    # which icons the app actually paints decides which faces are loadable
+    uses = lambda *names: any(n in html for n in names)
+    fa_needed = set()
+    if uses('fa-solid', 'fas'):
+        fa_needed.add(('Font Awesome 6 Free', '900'))
+    if uses('fa-regular', 'far'):
+        fa_needed.add(('Font Awesome 6 Free', '400'))
+    if uses('fa-brands', 'fab'):
+        fa_needed.add(('Font Awesome 6 Brands', '400'))
+    seen = set()
+    blocks, total, dropped = [], 0, 0
     for rel in LINKS:
-        css, n = inline_css(rel)
+        css, n, drop = inline_css(rel, seen, fa_needed if 'fontawesome' in rel else None)
         total += n
+        dropped += drop
         blocks.append('    /* ---- inlined from %s ---- */\n    <style>\n%s\n    </style>' % (rel, css.strip()))
     head = head.replace(links, '\n'.join(blocks) + '\n', 1)
 
@@ -92,11 +127,19 @@ def build():
     body = html[html.find('</head>'):]
 
     out = head + '</head>' + body
-    return out, total
+    return out, total, dropped
+
+
+def write(outdir=None):
+    out, fonts, dropped = build()
+    path = os.path.join(outdir or OUTDIR, 'MCS-ERP-standalone.html')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, 'wb').write(out.encode('utf-8'))
+    return path, len(out), fonts, dropped
 
 
 if __name__ == '__main__':
-    out, fonts = build()
+    out, fonts, dropped = build()
 
     # nothing may point outside the file
     stray = re.findall(r'(?:src|href)="(?!#)([^"]+)"', out)
@@ -112,7 +155,7 @@ if __name__ == '__main__':
 
     print('wrote %s' % path)
     print('  size            : %.1f MB (%d bytes)' % (len(out) / 1048576.0, len(out)))
-    print('  fonts inlined   : %d' % fonts)
+    print('  fonts inlined   : %d (dropped %d redundant/unused @font-face blocks)' % (fonts, dropped))
     print('  external src/href: %s' % (', '.join(stray) or 'none'))
     print('  non-data url()  : %d' % len(leftover))
     print('  external URLs   : %s' % (', '.join(external) or 'none'))

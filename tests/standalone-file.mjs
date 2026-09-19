@@ -25,8 +25,12 @@ if (fs.existsSync(committed)) {
 
 s.ok(!/<link[^>]+vendor/.test(html), 'no <link> points at the missing vendor/ folder');
 s.ok(!/<script[^>]+src=/.test(html), 'no <script src> at all (everything is inline)');
-s.ok((html.match(/url\(data:font\/woff2;base64,/g) || []).length >= 15,
-     'webfonts inlined as data URIs: ' + (html.match(/url\(data:font/g) || []).length + ' faces');
+const faces = (html.match(/url\(data:font\/woff2;base64,/g) || []).length;
+s.ok(faces >= 6 && faces <= 10, 'webfonts inlined: ' + faces + ' faces (the ones this app can select, nothing padded)');
+const decls = [...html.matchAll(/@font-face\{[^}]*?font-family:\s*["']?([^;"']+)["']?[^}]*?font-weight:\s*([0-9]+|normal|bold)[^}]*\}/g)].map(m => m[1] + ':' + m[2]);
+s.ok(new Set(decls).size === decls.length, 'no @font-face declared twice: ' + decls.join(', '));
+s.ok(decls.some(f => /Font Awesome 6 Free:900/.test(f)), 'the one FA face the app paints with is inlined (fa-solid => Free 900)');
+s.ok(!decls.some(f => /Font Awesome 5|FontAwesome:|Brands/.test(f)), 'FA5/v4-compat/brands faces dropped - the app uses only fa-solid');
 s.ok(/\.text-xs\s*\{/.test(html) && /fa-truck-fast/.test(html), 'the Tailwind build and the FA glyphs came along');
 s.ok(html.includes('Excel needs the vendor/ folder'), 'Excel fallback text is in the built file');
 

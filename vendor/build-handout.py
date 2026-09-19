@@ -211,7 +211,7 @@ def card(title, label, desc, size, digest, hrefs, hot=False, note=''):
 
 
 def main():
-    html, fonts = bs.build()
+    html, fonts, dropped = bs.build()
     stamp = re.search(r"UX_BUILD = '([^']+)'", html).group(1)
 
     os.makedirs(OUTDIR, exist_ok=True)
@@ -298,7 +298,8 @@ def main():
         p = os.path.join(OUTDIR, name)
         print('  %-26s %8.2f MB  sha256 %s' % (name, os.path.getsize(p) / 1048576.0,
                                                hashlib.sha256(open(p, 'rb').read()).hexdigest()[:12]))
-    print('  webfont faces inlined: %d | build stamp: %s | public base: %s' % (fonts, stamp, pub or 'n/a'))
+    print('  webfont faces: %d inlined, %d redundant dropped | stamp: %s | public base: %s'
+          % (fonts, dropped, stamp, pub or 'n/a'))
     print('  repo archive: %s' % (gh or 'n/a (no github remote)'))
     with zipfile.ZipFile(archive) as z:
         bad = z.testzip()
